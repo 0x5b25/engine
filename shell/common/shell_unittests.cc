@@ -9,7 +9,6 @@
 #include <future>
 #include <memory>
 
-#include "flutter/common/runtime.h"
 #include "flutter/flow/layers/layer_tree.h"
 #include "flutter/flow/layers/transform_layer.h"
 #include "flutter/fml/command_line.h"
@@ -950,6 +949,69 @@ TEST_F(ShellTest, IsolateCanAccessPersistentIsolateData) {
   });
 
   message_latch.Wait();
+  DestroyShell(std::move(shell), std::move(task_runners));
+}
+
+TEST_F(ShellTest, RasterizerScreenshot) {
+  Settings settings = CreateSettingsForFixture();
+  auto configuration = RunConfiguration::InferFromSettings(settings);
+  auto task_runner = CreateNewThread();
+  TaskRunners task_runners("test", task_runner, task_runner, task_runner,
+                           task_runner);
+  std::unique_ptr<Shell> shell =
+      CreateShell(std::move(settings), std::move(task_runners));
+
+  ASSERT_TRUE(ValidateShell(shell.get()));
+  PlatformViewNotifyCreated(shell.get());
+
+  RunEngine(shell.get(), std::move(configuration));
+
+  auto latch = std::make_shared<fml::AutoResetWaitableEvent>();
+
+  PumpOneFrame(shell.get());
+
+  fml::TaskRunner::RunNowOrPostTask(
+      shell->GetTaskRunners().GetGPUTaskRunner(), [&shell, &latch]() {
+        Rasterizer::Screenshot screenshot =
+            shell->GetRasterizer()->ScreenshotLastLayerTree(
+                Rasterizer::ScreenshotType::CompressedImage, true);
+        EXPECT_NE(screenshot.data, nullptr);
+
+        latch->Signal();
+      });
+  latch->Wait();
+  DestroyShell(std::move(shell), std::move(task_runners));
+}
+
+TEST_F(ShellTest, RasterizerMakeRasterSnapshot) {
+  Settings settings = CreateSettingsForFixture();
+  auto configuration = RunConfiguration::InferFromSettings(settings);
+  auto task_runner = CreateNewThread();
+  TaskRunners task_runners("test", task_runner, task_runner, task_runner,
+                           task_runner);
+  std::unique_ptr<Shell> shell =
+      CreateShell(std::move(settings), std::move(task_runners));
+
+  ASSERT_TRUE(ValidateShell(shell.get()));
+  PlatformViewNotifyCreated(shell.get());
+
+  RunEngine(shell.get(), std::move(configuration));
+
+  auto latch = std::make_shared<fml::AutoResetWaitableEvent>();
+
+  PumpOneFrame(shell.get());
+
+  fml::TaskRunner::RunNowOrPostTask(
+      shell->GetTaskRunners().GetGPUTaskRunner(), [&shell, &latch]() {
+        SnapshotDelegate* delegate =
+            reinterpret_cast<Rasterizer*>(shell->GetRasterizer().get());
+        sk_sp<SkImage> image = delegate->MakeRasterSnapshot(
+            SkPicture::MakePlaceholder({0, 0, 50, 50}), SkISize::Make(50, 50));
+        EXPECT_NE(image, nullptr);
+
+        latch->Signal();
+      });
+  latch->Wait();
   DestroyShell(std::move(shell), std::move(task_runners));
 }
 

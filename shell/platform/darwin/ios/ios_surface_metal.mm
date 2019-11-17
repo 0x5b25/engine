@@ -22,8 +22,9 @@ bool IOSSurfaceMetal::IsValid() const {
 }
 
 // |IOSSurface|
-bool IOSSurfaceMetal::ResourceContextMakeCurrent() {
-  return false;
+std::unique_ptr<RendererContextSwitchManager::RendererContextSwitch>
+IOSSurfaceMetal::ResourceContextMakeCurrent() {
+  return std::make_unique<RendererContextSwitchManager::RendererContextSwitchPureResult>(false);
 }
 
 // |IOSSurface|
@@ -38,7 +39,7 @@ std::unique_ptr<Surface> IOSSurfaceMetal::CreateGPUSurface(GrContext* gr_context
 }
 
 // |ExternalViewEmbedder|
-sk_sp<SkSurface> IOSSurfaceMetal::GetRootSurface() {
+SkCanvas* IOSSurfaceMetal::GetRootCanvas() {
   // On iOS, the root surface is created from the on-screen render target. Only the surfaces for the
   // various overlays are controlled by this class.
   return nullptr;

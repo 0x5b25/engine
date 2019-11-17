@@ -40,6 +40,7 @@ TEST_F(DartIsolateTest, RootIsolateCreationAndShutdown) {
       vm_data->GetIsolateSnapshot(),      // isolate snapshot
       std::move(task_runners),            // task runners
       nullptr,                            // window
+      {},                                 // snapshot delegate
       {},                                 // io manager
       {},                                 // unref queue
       {},                                 // image decoder
@@ -73,6 +74,7 @@ TEST_F(DartIsolateTest, IsolateShutdownCallbackIsInIsolateScope) {
       vm_data->GetIsolateSnapshot(),      // isolate snapshot
       std::move(task_runners),            // task runners
       nullptr,                            // window
+      {},                                 // snapshot delegate
       {},                                 // io manager
       {},                                 // unref queue
       {},                                 // image decoder
@@ -183,6 +185,7 @@ static void RunDartCodeInIsolate(DartVMRef& vm_ref,
       vm_data->GetIsolateSnapshot(),      // isolate snapshot
       std::move(task_runners),            // task runners
       nullptr,                            // window
+      {},                                 // snapshot delegate
       {},                                 // io manager
       {},                                 // unref queue
       {},                                 // image decoder
@@ -361,6 +364,7 @@ TEST_F(DartIsolateTest, CanSaveCompilationTrace) {
 TEST_F(DartIsolateTest, CanLaunchSecondaryIsolates) {
   fml::CountDownLatch latch(3);
   fml::AutoResetWaitableEvent child_shutdown_latch;
+  fml::AutoResetWaitableEvent root_isolate_shutdown_latch;
   AddNativeCallback("NotifyNative",
                     CREATE_NATIVE_ENTRY(([&latch](Dart_NativeArguments args) {
                       latch.CountDown();
@@ -373,6 +377,9 @@ TEST_F(DartIsolateTest, CanLaunchSecondaryIsolates) {
         latch.CountDown();
       })));
   auto settings = CreateSettingsForFixture();
+  settings.root_isolate_shutdown_callback = [&root_isolate_shutdown_latch]() {
+    root_isolate_shutdown_latch.Signal();
+  };
   settings.isolate_shutdown_callback = [&child_shutdown_latch]() {
     child_shutdown_latch.Signal();
   };
@@ -382,6 +389,7 @@ TEST_F(DartIsolateTest, CanLaunchSecondaryIsolates) {
   ASSERT_TRUE(isolate);
   ASSERT_EQ(isolate->get()->GetPhase(), DartIsolate::Phase::Running);
   child_shutdown_latch.Wait();  // wait for child isolate to shutdown first
+  ASSERT_FALSE(root_isolate_shutdown_latch.IsSignaledForTest());
   latch.Wait();  // wait for last NotifyNative called by main isolate
   // root isolate will be auto-shutdown
 }

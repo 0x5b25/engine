@@ -92,7 +92,7 @@ class EmbedderExternalViewEmbedder final : public ExternalViewEmbedder {
   bool SubmitFrame(GrContext* context) override;
 
   // |ExternalViewEmbedder|
-  sk_sp<SkSurface> GetRootSurface() override;
+  SkCanvas* GetRootCanvas() override;
 
  private:
   using ViewIdentifier = int64_t;
@@ -137,11 +137,16 @@ class EmbedderExternalViewEmbedder final : public ExternalViewEmbedder {
   std::map<ViewIdentifier, EmbeddedViewParams> pending_params_;
   std::vector<ViewIdentifier> composition_order_;
   std::shared_ptr<EmbedderRenderTarget> root_render_target_;
+  std::unique_ptr<SkPictureRecorder> root_picture_recorder_;
   Registry registry_;
 
   void Reset();
 
   SkMatrix GetSurfaceTransformation() const;
+
+  bool RenderPictureToRenderTarget(
+      sk_sp<SkPicture> picture,
+      const EmbedderRenderTarget* render_target) const;
 
   FML_DISALLOW_COPY_AND_ASSIGN(EmbedderExternalViewEmbedder);
 };
