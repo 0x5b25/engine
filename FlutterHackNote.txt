@@ -1,0 +1,26 @@
+[native and dart objects]
+
+all c++ native types must inherit RefCountedDartWrappable<T> to be able to pass to dart vm.
+c++ native types passed to dart vm should be represented by NativeFieldWrapperClass2 in dart.
+
+native ui library registered c++ part to dart vm using "static void RegisterNatives(tonic::DartLibraryNatives* natives)" function. called in "void DartUI::InitForGlobal()" function 
+located in flutter/lib/ui/dart_ui.cc. dart part is included in .gni file
+ 
+
+[dart.ui.image]
+
+dart.ui.image is a c++ native class wrapper. native type is flutter::CanvasImage,underlying type is SKImage. c++ source file flutter/lib/ui/painting/canvas.h.
+create using flutter::CanvasImage::Create()
+
+create sk_sp<SkImage> skImage; CanvasImage.set_image(skimage);
+
+[GrContext and skia]
+
+Use io manager to access GrContext and skia resources hence those aren't thread safe
+
+#include "flutter/lib/ui/ui_dart_state.h"
+auto* dart_state = UIDartState::Current();
+dart_state->GetIOManager()
+
+[Notifications]
+Preserve engine dart source code whenever possible, because other dart libraries rely on those, changing source code means possible compile error!
