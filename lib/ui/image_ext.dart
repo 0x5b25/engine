@@ -1,7 +1,7 @@
 part of dart.ui;
 
 
-class ImageExt{
+class ImageExt extends NativeFieldWrapperClass2{
 
   String SayHello() native "ImageExt_SayHello";
 

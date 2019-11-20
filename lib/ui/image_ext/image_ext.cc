@@ -33,7 +33,7 @@ IMPLEMENT_WRAPPERTYPEINFO(ui, ImageExt);
 FOR_EACH_BINDING(DART_NATIVE_CALLBACK)
 
 void ImageExt::dispose() {
-  //ClearDartWrapper();
+  ClearDartWrapper();
 }
 
 
