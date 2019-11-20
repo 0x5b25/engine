@@ -29,6 +29,7 @@
 #include "flutter/lib/ui/text/paragraph.h"
 #include "flutter/lib/ui/text/paragraph_builder.h"
 #include "flutter/lib/ui/window/window.h"
+#include "flutter/lib/ui/image_ext/image_ext.h"
 #include "third_party/tonic/converter/dart_converter.h"
 #include "third_party/tonic/logging/dart_error.h"
 
@@ -94,6 +95,7 @@ void DartUI::InitForGlobal() {
     SemanticsUpdateBuilder::RegisterNatives(g_natives);
     Vertices::RegisterNatives(g_natives);
     Window::RegisterNatives(g_natives);
+    ImageExt::RegisterNatives(g_natives);
 #if defined(OS_FUCHSIA)
     SceneHost::RegisterNatives(g_natives);
 #endif
